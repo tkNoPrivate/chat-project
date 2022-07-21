@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.chat.repository.mapper.UserMapper">
+	
+   <resultMap type="com.example.chat.model.UserResponse" id="userInf">
+   	<id column="userId" property="userId"/> 
+   	<result column="userName" property="userName"/>
+   	<result column="insDt" property="insDt"/>
+   	<result column="updDt" property="updDt"/>
+   	<collection property="rooms" columnPrefix="r_" ofType="com.example.chat.model.RoomResponse">
+   		<id column="roomId" property="roomId" />
+   		<result column="roomName" property="roomName"/>
+   		<result column="registeredUser" property="registeredUser"/>
+   		<result column="insDt" property="insDt"/>
+   		<result column="updDt" property="updDt"/>
+   		<collection property="joinUsers" columnPrefix="ju_" ofType="com.example.chat.model.UserResponse">
+	   		<id column="userId" property="userId" />
+	   		<result column="userName" property="userName"/>
+   		</collection>
+   	</collection>
+   </resultMap>
+   
+   <select id="select" resultMap="userInf">
+      select 
+      	u.user_id userId,
+      	u.user_name userName,
+      	u.ins_dt insDt,
+      	u.upd_dt updDt,
+      	r.id r_roomId,
+      	r.room_name r_roomName,
+      	r.registered_user r_registeredUser,
+      	r.ins_dt r_insDt,
+      	r.upd_dt r_updDt,
+      	ju.user_id r_ju_userId,
+      	ju.user_name r_ju_userName
+      from 
+      	users u
+      left outer join 
+      	joinroom j
+      on
+      	u.user_id = j.user_id
+      left outer join 
+      	rooms r
+      on
+      	r.id = j.room_id
+      or
+      	r.registered_user = u.user_id
+      left outer join
+      	joinroom rj
+      on
+      	r.id = rj.room_id
+      left outer join
+      	users ju
+      on
+      	rj.user_id = ju.user_id
+      or
+      	r.registered_user = ju.user_id
+      where 
+      	u.user_id = #{userId}
+      order by
+        r.id
+   </select>
+   
+   <select id="selectAll" resultType="com.example.chat.model.UserResponse">
+   		select
+    		user_id userId,
+   			user_name userName
+   		from
+   			users
+   		order by
+   			user_id
+   </select>
+   
+   <insert id="insert" parameterType="com.example.chat.model.User">
+      insert into 
+      	users
+      values(
+      	#{userId},
+      	#{userName},
+      	#{password},
+      	#{role},
+      	#{insDt},
+      	#{updDt}   
+      );
+   </insert>
+   
+   <update id="update" parameterType="com.example.chat.model.User">
+   		update 
+   			users
+   		set
+   			user_name = #{userName},
+   			upd_dt = #{updDt}
+   		where
+   			user_id = #{userId}
+   </update>
+   <select id="selectPassword" resultType="String">
+   		select
+   			password
+   		from
+   			users
+   		where
+   			user_id = #{userId}
+   </select>
+   
+   <update id="updatePassword" parameterType="com.example.chat.model.PasswordUpdate">
+   		update 
+   			users
+   		set
+   			password = #{newPassword},
+   			upd_dt = #{updDt}
+   		where
+   			user_id = #{userId}
+   </update>
+   
+   <delete id="delete" parameterType="com.example.chat.model.User">
+   		delete
+   			u,
+   			jr,
+   			r,
+   			p,
+   			c,
+   			pl,
+   			cl 
+   		from
+   			users u
+   		left outer join
+   			joinroom jr
+   		on
+   			u.user_id = jr.user_id
+   		left outer join
+   			rooms r
+   		on
+   			u.user_id = r.registered_user
+   		left outer join
+   			posts p
+   		on
+   			u.user_id = p.user_id
+   		left outer join
+   			comments c
+   		on
+   			u.user_id = c.user_id
+   		left outer join
+   			postlikes pl
+   		on
+   			u.user_id = pl.user_id
+   		left outer join
+   			commentlikes cl
+   		on
+   			u.user_id = cl.user_id
+   		where
+   			u.user_id = #{userId}
+   </delete>
+   
+</mapper>

@@ -1,0 +1,41 @@
+version: '2.6'
+services:
+  db:
+    image: mysql:8
+    container_name: db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/sql/:/docker-entrypoint-initdb.d
+      - ./mysql/settings/:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    environment:
+      MYSQL_DATABASE: "chatproject"
+      MYSQL_ROOT_USER: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+      TZ: "Asia/Tokyo"
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_ROOT_USER -p$$MYSQL_ROOT_PASSWORD
+  server:
+    container_name: server
+    build: ./server/ChatProject
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server/ChatProject:/chat/server
+    working_dir: /chat/server
+    tty: true
+    depends_on:
+      db:
+        condition: service_healthy
+  front:
+    container_name: front
+    build: ./front/chatproject
+    ports:
+      - 8081:8081
+    working_dir: /chat/front
+    volumes:
+      - ./front/chatproject:/chat/front
+    stdin_open: true
+    tty: true
+    
